@@ -4,6 +4,8 @@ import { Card, CardDataProps } from './Card';
 import { UserFilters } from './UserFilters';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { toast } from '@/hooks/use-toast';
 
 interface CardStackProps {
   userType: 'worker' | 'employer';
@@ -94,29 +96,39 @@ export const CardStack: React.FC<CardStackProps> = ({ userType }) => {
     // Simulate loading data from an API
     setLoading(true);
     setTimeout(() => {
-      setCards(userType === 'worker' ? sampleEmployers : sampleWorkers);
+      const initialData = userType === 'worker' ? sampleEmployers : sampleWorkers;
+      setCards(initialData);
       setLoading(false);
-    }, 1500);
+    }, 1000);
   }, [userType]);
 
   const handleSwipe = (direction: 'left' | 'right', id: string) => {
     // In a real app, you would handle matches and store user preferences here
     console.log(`Swiped ${direction} on ${id}`);
     
+    if (direction === 'right') {
+      // This would be a "match" in a real app
+      toast({
+        title: "It's a match!",
+        description: "You've been connected. Reveal the contact to get in touch.",
+      });
+    }
+    
+    // Remove the card from the stack
     setCards((prevCards) => {
-      // If swiped right, this would be a "match" in a real app
-      if (direction === 'right') {
-        // You could trigger match logic here
-      }
-      
-      // Remove the card from the stack
       const updatedCards = prevCards.filter(card => card.id !== id);
       
-      // If no cards left, you could reload or show a message
+      // If no cards left, reload the deck after a delay
       if (updatedCards.length === 0) {
+        setLoading(true);
         setTimeout(() => {
           setCards(userType === 'worker' ? sampleEmployers : sampleWorkers);
-        }, 1000);
+          setLoading(false);
+          toast({
+            title: "New matches available",
+            description: "We've found more potential matches for you.",
+          });
+        }, 1500);
       }
       
       return updatedCards;
@@ -127,7 +139,6 @@ export const CardStack: React.FC<CardStackProps> = ({ userType }) => {
     setFilters(newFilters);
     
     // In a real app, you would fetch filtered data from an API
-    // For now, we'll simulate filtering with timeout
     setLoading(true);
     setTimeout(() => {
       const dataSource = userType === 'worker' ? sampleEmployers : sampleWorkers;
@@ -149,7 +160,23 @@ export const CardStack: React.FC<CardStackProps> = ({ userType }) => {
       
       setCards(filteredCards);
       setLoading(false);
+      
+      if (filteredCards.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "No matches found",
+          description: "Try adjusting your filters to see more results."
+        });
+      }
     }, 1000);
+  };
+
+  const resetCards = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setCards(userType === 'worker' ? sampleEmployers : sampleWorkers);
+      setLoading(false);
+    }, 800);
   };
 
   return (
@@ -166,10 +193,13 @@ export const CardStack: React.FC<CardStackProps> = ({ userType }) => {
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center p-6"
+            className="text-center p-6 flex flex-col items-center"
           >
             <h3 className="text-xl font-semibold mb-2">No matches found</h3>
             <p className="text-muted-foreground mb-6">Try adjusting your filters or check back later</p>
+            <Button onClick={resetCards}>
+              Refresh Matches
+            </Button>
           </motion.div>
         ) : (
           <div className="relative w-full h-[70vh] max-h-[600px]">

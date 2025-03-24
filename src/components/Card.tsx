@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion';
 import { MapPin, Clock, Briefcase } from 'lucide-react';
 import { PhoneReveal } from './PhoneReveal';
 import { Button } from '@/components/ui/button';
@@ -25,68 +25,57 @@ interface CardProps {
 }
 
 export const Card: React.FC<CardProps> = ({ data, onSwipe, isCurrent }) => {
-  const [isPhoneRevealed, setIsPhoneRevealed] = React.useState(false);
-  const [startPosition, setStartPosition] = React.useState({ x: 0, y: 0 });
-  const [offset, setOffset] = React.useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = React.useState(false);
+  const [isPhoneRevealed, setIsPhoneRevealed] = useState(false);
+  const [exitX, setExitX] = useState(0);
+  
+  // Motion values for the card
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-200, 0, 200], [-15, 0, 15]);
+  
+  // Determine background opacity based on drag distance
+  const opacity = useTransform(
+    x,
+    [-200, -100, 0, 100, 200],
+    [0.8, 0.9, 1, 0.9, 0.8]
+  );
 
   const handlePhoneReveal = () => {
     setIsPhoneRevealed(true);
   };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
+  
+  const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     if (!isCurrent) return;
-    setStartPosition({
-      x: e.touches[0].clientX,
-      y: e.touches[0].clientY,
-    });
-    setIsDragging(true);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging) return;
-    setOffset({
-      x: e.touches[0].clientX - startPosition.x,
-      y: e.touches[0].clientY - startPosition.y,
-    });
-  };
-
-  const handleTouchEnd = () => {
-    if (!isDragging) return;
-    setIsDragging(false);
     
-    if (offset.x > 100) {
+    // Determine if the card was dragged far enough for a swipe
+    if (info.offset.x > 100) {
+      setExitX(200);
       onSwipe('right', data.id);
-    } else if (offset.x < -100) {
+    } else if (info.offset.x < -100) {
+      setExitX(-200);
       onSwipe('left', data.id);
-    } else {
-      // Reset position if not swiped enough
-      setOffset({ x: 0, y: 0 });
     }
   };
 
-  // Calculate rotation and opacity based on offset
-  const rotate = offset.x * 0.1; // Rotate more the further you swipe
-  const opacity = Math.max(1 - Math.abs(offset.x) / 400, 0.5);
+  // Only apply drag constraints to the current card
+  const dragConstraints = isCurrent ? {} : { left: 0, right: 0, top: 0, bottom: 0 };
 
   return (
     <motion.div
-      className={`absolute top-0 left-0 w-full h-full swipe-card-container 
-        ${isCurrent ? 'z-10' : 'z-0'}`}
-      initial={{ scale: isCurrent ? 1 : 0.9, opacity: isCurrent ? 1 : 0 }}
-      animate={{
-        scale: isCurrent ? 1 : 0.9,
-        opacity: isCurrent ? opacity : 0,
-        x: isCurrent ? offset.x : 0,
-        y: isCurrent ? offset.y : 0,
-        rotate: isCurrent ? rotate : 0,
+      className={`absolute top-0 left-0 right-0 w-full mx-auto max-w-md h-full swipe-card-container 
+        ${isCurrent ? 'z-10 cursor-grab active:cursor-grabbing' : 'z-0 pointer-events-none'}`}
+      style={{ x, rotate, opacity }}
+      drag={isCurrent}
+      dragConstraints={dragConstraints}
+      onDragEnd={handleDragEnd}
+      animate={{ x: exitX }}
+      exit={{ 
+        x: exitX,
+        opacity: 0,
+        transition: { duration: 0.2 }
       }}
-      transition={{ type: 'spring', damping: 15, stiffness: 150 }}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
+      transition={{ type: 'spring', damping: 20, stiffness: 100 }}
     >
-      <div className="relative w-full h-full max-w-md mx-auto overflow-hidden rounded-2xl glassmorphism card-shadow">
+      <div className="relative w-full h-full overflow-hidden rounded-2xl glassmorphism card-shadow">
         <div 
           className="h-48 bg-cover bg-center"
           style={{ backgroundImage: `url(${data.profileImage})` }}

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { toast } from '@/hooks/use-toast';
 
 interface PhoneRevealProps {
   onComplete: () => void;
@@ -20,8 +21,14 @@ export const PhoneReveal: React.FC<PhoneRevealProps> = ({ onComplete }) => {
         setCountdown((prev) => {
           if (prev <= 1) {
             clearInterval(timer);
-            setIsAdPlaying(false);
-            onComplete();
+            setTimeout(() => {
+              setIsAdPlaying(false);
+              onComplete();
+              toast({
+                title: "Contact Revealed",
+                description: "You can now contact this person directly.",
+              });
+            }, 500);
             return 0;
           }
           return prev - 1;
@@ -39,6 +46,8 @@ export const PhoneReveal: React.FC<PhoneRevealProps> = ({ onComplete }) => {
 
   const startAd = () => {
     setIsAdPlaying(true);
+    setProgress(0);
+    setCountdown(5);
   };
 
   return (
@@ -50,7 +59,13 @@ export const PhoneReveal: React.FC<PhoneRevealProps> = ({ onComplete }) => {
         Reveal Contact Number
       </Button>
 
-      <Dialog open={isAdPlaying} onOpenChange={setIsAdPlaying}>
+      <Dialog open={isAdPlaying} onOpenChange={(open) => {
+        // Prevent dialog from closing early if user tries to close it
+        if (!open && countdown > 0) {
+          return;
+        }
+        setIsAdPlaying(open);
+      }}>
         <DialogContent className="sm:max-w-md flex flex-col items-center justify-center p-6 space-y-6">
           <h3 className="text-xl font-semibold">Watch Ad to Reveal Number</h3>
           
