@@ -24,7 +24,7 @@ export const Navbar: React.FC<NavbarProps> = ({ userType, onReset }) => {
           </Button>
           <div onClick={onReset} className="cursor-pointer">
             <h2 className="text-lg font-bold">
-              JobSwipe
+              Tempi
               {userType && (
                 <span className="text-xs font-normal ml-2 text-muted-foreground">
                   {userType === 'worker' ? 'Worker View' : 'Employer View'}

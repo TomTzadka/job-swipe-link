@@ -18,7 +18,7 @@ export const UserTypeSelector: React.FC<UserTypeSelectorProps> = ({ onSelect }) 
         transition={{ duration: 0.5 }}
         className="mb-8 text-center"
       >
-        <h1 className="text-3xl font-bold mb-2">Welcome to JobSwipe</h1>
+        <h1 className="text-3xl font-bold mb-2">Welcome to Tempi</h1>
         <p className="text-muted-foreground">Select your role to get started</p>
       </motion.div>
       
