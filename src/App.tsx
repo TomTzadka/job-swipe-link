@@ -18,7 +18,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <MotionConfig reducedMotion="user">
-        <BrowserRouter>
+        <BrowserRouter basename="/job-swipe-link">
           <Routes>
             <Route path="/" element={<Index />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
